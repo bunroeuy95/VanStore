@@ -1,0 +1,90 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  username     String     @unique
+  email        String     @unique
+  passwordHash String
+  role         String     @default("USER")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  orders       Order[]
+  wishlists    Wishlist[]
+}
+
+model Product {
+  id          String     @id @default(cuid())
+  name        String
+  category    String
+  description String
+  price       Float
+  imageUrl    String?
+  stock       Int        @default(0)
+  featured    Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  orders      Order[]
+  wishlists   Wishlist[]
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  orderCode       String   @unique
+  userId          String?
+  productId       String
+  productName     String
+  price           Float
+  productImage    String?
+  customerName    String
+  customerContact String?
+  status          String   @default("Pending")
+  paymentMethod   String?
+  paymentProofUrl String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user    User?   @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([userId])
+  @@index([productId])
+}
+
+model Wishlist {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+}
+
+model SiteSettings {
+  id               String   @id @default(cuid())
+  storeName        String   @default("MineKeys")
+  storeLogo        String?
+  telegramUsername String   @default("your_admin")
+  tiktokUsername   String   @default("your_tiktok")
+  facebookUrl      String   @default("https://facebook.com")
+  khqrImageUrl     String?
+  abaAccount       String?
+  acledaAccount    String?
+  wingAccount      String?
+  khqrInstructions String?  @default("Scan KHQR to pay. Upload screenshot after payment.")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
